@@ -11,8 +11,8 @@ class BloomFilter:
         h = abs(hash(key)) % (2**32) # 32-bit int
 
         
-        lower = h % 2**16
-        higher = (h >> 16) % 2**16
+        lower = h % (2**16)
+        higher = (h >> 16) % (2**16)
         return [lower, higher]
 
     def add(self, key: str):
@@ -21,11 +21,7 @@ class BloomFilter:
         """
 
         for h in self._hashes(key):
-            pass
-            # TODO: implement.
-            # should look like:
-            # self._bits[h] = True
-            # but using a bitvector rather than an array
+            self._bits = self._bits | (1<<h)
 
     def _true_bits(self) -> int:
         """
@@ -46,10 +42,6 @@ class BloomFilter:
         while True indicates 'probably in the filter'.
         """
         for h in self._hashes(key):
-            pass
-            # TODO: implement.
-            # should look like:
-            # if not self._bits[h]:
-            #     return False # not all the necessary bits were flipped, so definitely not in the filter
+            if not(self._bits & (1<<h)):
+                return False
         return True
-
