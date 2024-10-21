@@ -10,10 +10,10 @@ class BloomFilter:
         """
         h = abs(hash(key)) % (2**32) # 32-bit int
 
-        # TODO: split into lower 16 bits and higher 16 bits
-        lower = 0
-        highter = 0
-        return [lower, highter]
+        
+        lower = h % 2**16
+        higher = (h >> 16) % 2**16
+        return [lower, higher]
 
     def add(self, key: str):
         """
