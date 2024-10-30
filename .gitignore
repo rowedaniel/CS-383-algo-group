@@ -1,0 +1,26 @@
+## This file tells git what NOT to include in version control
+
+# General JetBrains configuration information
+.idea/
+*.ipr
+*.iml
+
+# IntelliJ / Java information
+out/
+*.class
+
+# PyCharm / Python information
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Automatic backups created by Emacs
+*~
+
+# Hidden files used by macOS to indicate directory display details, e.g., icon positions
+.DS_Store
+
+# Sources I consulted in creating this file:
+# https://github.com/github/gitignore/blob/master/Global/JetBrains.gitignore
+# https://github.com/github/gitignore/blob/master/Python.gitignore
