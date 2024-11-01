@@ -10,7 +10,6 @@ def match(pattern, text):
 
                 for l in range(len(pattern)):
 
-                    print(pattern[k][l])
                     if (pattern[k][l] != text[i+k][j+l]):
                         match_is_good = False
                         break
