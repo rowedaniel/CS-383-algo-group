@@ -1,0 +1,26 @@
+2D Pattern Matching
+Team: Daniel, Elliot, Ian, Alex
+In terms of m and n, what is the order of the worst case running time for these algorithms? (It's the same for both of them.)
+The worst-case big-Θ is Θ(m2⋅n2) for both algorithms.
+Calculating XOR of pattern is Θ(m2). 
+Number of positions needed to check is (n-m+1)2, which is approximately n2 if n is much larger than m.
+Worst case scenario for the fingerprint method is that every XOR matches, and so you have to perform a brute force comparison of each position.j
+
+How much actual time does it take to run each of the test cases? (PyCharm will give you this information when you run the tests. For accurate measurements, you should ideally have nothing else running on your computer when you run the tests.)
+
+On my computer, the times for the fingerprint method were
+1.20s call 	test/test_fingerprint_match.py::test_finds_large_matches_in_dense_arrays
+1.00s call 	test/test_fingerprint_match.py::test_finds_large_matches_in_sparse_arrays
+0.00s call 	test/test_fingerprint_match.py::test_finds_small_matches_in_dense_arrays
+0.00s call 	test/test_fingerprint_match.py::test_finds_small_matches_in_sparse_arrays
+0.00s call 	test/test_fingerprint_match.py::test_finds_nonmatches
+And the times for the brute force method were
+0.33s call 	test/test_brute_force_match.py::test_finds_large_matches_in_dense_arrays
+7.55s call 	test/test_brute_force_match.py::test_finds_large_matches_in_sparse_arrays
+0.00s call 	test/test_brute_force_match.py::test_finds_small_matches_in_dense_arrays
+0.00s call 	test/test_brute_force_match.py::test_finds_small_matches_in_sparse_arrays
+0.00s call 	test/test_brute_force_match.py::test_finds_nonmatches
+
+One algorithm performs much better on dense arrays (which are full of random numbers) and the other performs much better on sparse arrays (where almost all of the elements are zero). Which is which and how do you explain this behavior?
+
+The fingerprint method is slower on dense arrays, while the brute force method is much slower on sparse arrays. This is likely because on dense arrays, it is more frequent that the fingerprint at a location will match the pattern fingerprint, making the fingerprint computation redundant. For sparse arrays, meanwhile, the brute force method has to check every single position, achieving the worst-case big-Θ, while the fingerprint of the search space is usually going to be 0–so as long as the fingerprint of the pattern isn’t 0, it will match very infrequently.
