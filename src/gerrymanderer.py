@@ -98,3 +98,44 @@ class Gerrymanderer:
             return [list(range(d * i, d * ( i + 1))) for i in range(d)]
         else:
             return [list(range(i, d * d, d)) for i in range(d)]
+
+    def find_district(self, electorate, voter, found, count):
+        count += 1
+        if count == electorate.district_size():
+            return [voter]
+        found[voter] = True
+        for neighbor in electorate.graph.neighbors(voter):
+            if not found[neighbor]:
+                result = self.find_district(electorate, neighbor, found, count)
+                if result:
+                    return result + [voter]
+        return None
+
+    def find_all_districts(self, electorate, party):
+        """
+        we want to find all districts in graph by calling find districts repeatedly
+
+        well take in the electorate and give back a list of lists containing voters
+
+        """
+
+        found = [False] * len(electorate.votes)  # Track visited voters
+        all_districts = []
+        voters = range(len(electorate.votes))   # List of all voters in the graph
+
+        for voter in voters:
+            if not found[voter]:  # If voter is not already part of a district
+                district = self.find_district(electorate, voter, found, 0)
+                if district:
+                    all_districts.append(district)
+        
+        return all_districts
+
+
+
+if __name__ == "__main__":
+
+    g = Gerrymanderer()
+    e = Electorate(3)
+    print(g.all_districts(e))
+    
