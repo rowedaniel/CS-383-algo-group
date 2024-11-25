@@ -20,6 +20,8 @@ def measure(d, n, gerrymanderer):
     return sum / (d * 2 * n)
 
 
+from gerrymanderer import Gerrymanderer
 from striper import Striper
 
+print(measure(9, 100, Gerrymanderer()))
 print(measure(9, 100, Striper()))
