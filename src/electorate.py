@@ -34,7 +34,7 @@ class Electorate:
 
     def graph_with_only_within_district_edges(self, districts):
         g = Graph(self.number_of_voters())
-        d = self.district_size()
+        d = self.district_size()    
         for district in districts:
             for i in range(d):
                 for j in range(i + 1, d):
@@ -89,3 +89,24 @@ class Electorate:
             if sum(self.votes[i] == party for i in d) > district_size / 2:
                 result += 1
         return result
+
+    # def get_wins(self, groups, party):
+    #     district_size = len(groups[0])  # assuming all groups are the same size
+    #     for d in groups:
+    #         # Check if all indices in the district are valid
+    #         for i in d:
+    #             if i >= len(self.votes):
+    #                 print(f'self.votes: {self.votes}')
+    #                 print(f'self.graph.adj: {self.graph.adj}')
+    #                 print(d)
+    #                 print(f"Index {i} is out of bounds for self.votes (vote list size: {len(self.votes)})")
+    #                 continue  # or handle the error by skipping this district
+    #         if sum(self.votes[i] == party for i in d) > district_size / 2:
+    #             return True
+    #     return False
+
+
+if __name__ == "__main__":
+
+    e = Electorate(9)
+    print(e.get_wins([[0, 9, 18, 19, 28, 27, 36, 37, 38], [1, 10, 11, 12, 21, 22, 31, 32, 41], [2, 3, 4, 13, 14, 23, 24, 33, 42], [5, 6, 15, 16, 7, 8, 17, 26, 25], [20, 29, 30, 39, 48, 47, 46, 45, 54], [34, 43, 52, 51, 60, 61, 70, 69, 68], [40, 49, 50, 59, 58, 67, 66, 75, 76], [35, 44, 53, 62, 71, 80, 79, 78, 77], [55, 64, 63, 72, 73, 74, 65, 56, 57]], True))

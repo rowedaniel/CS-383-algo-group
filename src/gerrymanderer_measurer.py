@@ -1,5 +1,6 @@
 from electorate import Electorate
-
+from gerrymanderer import *
+from striper import Striper
 
 def measure(d, n, gerrymanderer):
     """
@@ -19,9 +20,19 @@ def measure(d, n, gerrymanderer):
             sum += e.get_wins(districts, party)
     return sum / (d * 2 * n)
 
+# 12 max, 13 is cooked
+width = 9
+simulations = 1
+e = Electorate(width)
+gr = Grid(width)
 
-from gerrymanderer import Gerrymanderer
-from striper import Striper
+import time
 
-print(measure(9, 100, Gerrymanderer()))
-print(measure(9, 100, Striper()))
+start_time = time.time()
+
+print(measure(width, simulations, Gerrymanderer(gr)))
+print(measure(width, simulations, Striper()))
+# Code to be timed
+end_time = time.time()
+elapsed_time = end_time - start_time
+print("Elapsed time:", elapsed_time)

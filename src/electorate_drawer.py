@@ -1,4 +1,9 @@
 import matplotlib.pyplot as plt
+from electorate import Electorate
+from gerrymanderer import *
+
+from striper import Striper
+
 
 
 def draw(electorate, districts):
@@ -28,9 +33,17 @@ def draw(electorate, districts):
     exit()
 
 
-from electorate import Electorate
-from striper import Striper
+
+
+
+
+# e = Electorate(9)
+# districts = Striper().gerrymander(e, True)
+# draw(e, districts)
 
 e = Electorate(9)
-districts = Striper().gerrymander(e, True)
+gr = Grid(e.district_size())
+districts = Gerrymanderer(gr).gerrymander(e, True)
 draw(e, districts)
+
+
