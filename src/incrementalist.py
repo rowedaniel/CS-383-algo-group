@@ -64,5 +64,6 @@ class Incrementalist:
                             except:
                                 pass  # This move wasn't legal; go on to the next one
         if best_move:
+            print(best_move)
             return best_move
         return ExchangeTiles(ALL_TILES)

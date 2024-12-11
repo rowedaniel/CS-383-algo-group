@@ -57,5 +57,12 @@ class GateKeeper:
         """
         return len(self._board.get_hand(1 - self._player_number))
 
+    def get_last_move(self):
+        """
+        Returns the opponent's last move, an instance of either an ExchangeTiles or PlayMove. If there have been no
+        moves yet, returns None.
+        """
+        return self._board.get_last_move()
+
     def __str__(self):
         return str(self._board)

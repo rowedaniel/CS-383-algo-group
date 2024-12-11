@@ -44,11 +44,17 @@ class Mode(Enum):
     GAME_OVER = 4  # Game over
 
 class Scrabble:
-    def __init__(self):
-        self.board = Board()
-        self.mode = Mode.AI_PLAYING
-        self.ai = Incrementalist()
-        self.ai.set_gatekeeper(GateKeeper(self.board, 0))
+    def __init__(self, board, ai_1, ai_2, name_1, name_2):
+        self.counter = 0
+        self.board = board
+        self.mode = Mode.BOARD
+        self.turn = 1
+        self.name_1 = name_1
+        self.name_2 = name_2
+        self.ai_1 = ai_1
+        self.ai_2 = ai_2
+        self.ai_1.set_gatekeeper(GateKeeper(self.board, 0))
+        self.ai_2.set_gatekeeper(GateKeeper(self.board, 1))
         self.created = [[False for _ in range(WIDTH)] for _ in range(WIDTH)]
         self.cursor_position = CENTER
         self.cursor_direction = VERTICAL
@@ -56,7 +62,7 @@ class Scrabble:
         self.hand_cursor = 0
         self.tiles_to_discard = [False] * 7
         self.root = Tk()
-        self.root.title('Scrabble')
+        self.root.title('scrabble')
         self.root['bg'] = TABLE_COLOR
         self.canvas = Canvas(self.root, width=450, height=450, bg=TABLE_COLOR, highlightthickness=0)
         self.canvas.pack(side=LEFT, padx=10, pady=10)
@@ -173,14 +179,12 @@ class Scrabble:
             # Play word
             elif key == '<Return>':
                 try:
-                    self.board.play(self.word_being_constructed,
-                                    self.cursor_position,
-                                    self.cursor_direction,
-                                    self.board.get_hand(1))
-                    if self.board.game_is_over():
-                        self.mode = Mode.GAME_OVER
+                    if self.turn == 1:
+                        self._play_ai_2_move()
                     else:
                         self._play_ai_move()
+                    if self.board.game_is_over():
+                        self.mode = Mode.GAME_OVER
                 except ValueError as e:
                     self.instructions.configure(text='Illegal move:\n\n' +
                                                 str(e) + '\n\n'
@@ -236,8 +240,8 @@ class Scrabble:
             else:
                 self._update_tile(hand, i)
         # Scores
-        self.opponent_label.configure(text=f'Opponent: {self.board.get_scores()[0]}')
-        self.user_label.configure(text=f'You: {self.board.get_scores()[1]}')
+        self.opponent_label.configure(text=f'{self.name_1}: {self.board.get_scores()[0]}')
+        self.user_label.configure(text=f'{self.name_2}: {self.board.get_scores()[1]}')
         # Instructions
         if self.mode == Mode.BOARD:
             self.entry_label.configure(text=f'[{self.word_being_constructed}]')
@@ -255,7 +259,10 @@ class Scrabble:
         elif self.mode == Mode.ILLEGAL_MOVE:
             pass  # Instructions were updated when the illegal move was played
         elif self.mode == Mode.GAME_OVER:
+            if self.counter < 1:
+                print(f"Final Score: {self.name_1} {self.board.get_scores()[0]}, {self.name_2} {self.board.get_scores()[1]}")
             self.instructions.configure(text='Game over.')
+            self.counter += 1
         elif self.mode == Mode.AI_PLAYING:
             self.instructions.configure(text='Opponent thinking...')
 
@@ -284,13 +291,28 @@ class Scrabble:
     def _play_ai_move(self):
         self.mode = Mode.AI_PLAYING
         self._update()
-        move = self.ai.choose_move()
+        move = self.ai_1.choose_move()
         place = move.play(self.board, 0)
         if place:
             self.cursor_position, self.cursor_direction = place
         if self.board.game_is_over():
             self.mode = Mode.GAME_OVER
         else:
+            self.turn = 2
+            self._enter_board_mode()
+        self._update()
+
+    def _play_ai_2_move(self):
+        self.mode = Mode.AI_PLAYING
+        self._update()
+        move = self.ai_2.choose_move()
+        place = move.play(self.board, 0)
+        if place:
+            self.cursor_position, self.cursor_direction = place
+        if self.board.game_is_over():
+            self.mode = Mode.GAME_OVER
+        else:
+            self.turn = 1
             self._enter_board_mode()
         self._update()
 
@@ -299,5 +321,58 @@ class Scrabble:
         self.word_being_constructed = ''
 
 
-Scrabble()
-quit()
+
+from incrementalist2 import Incrementalist
+from board import Board
+from gatekeeper import GateKeeper
+from tournament_gui import *
+
+
+class ScrabbleTournament:
+    """A tournament between AIs."""
+    def __init__(self, players):
+        self._players = players
+
+    def run(self):
+        """
+        Plays two games between each pair of contestants, one with each going first. Prints the number of wins for each
+        contestant (including 0.5 wins for each tie).
+        """
+        scores = [0] * len(players)
+        for i in range(len(players)):
+            for j in range(len(players)):
+                if i != j:
+                    i_won, j_won = self.play_game(players[i], players[j])
+                    scores[i] += i_won
+                    scores[j] += j_won
+        for i, player in enumerate(players):
+            print(f'{str(player)}: {scores[i]}')
+
+    @staticmethod
+    def play_game(a, b):
+        """
+        Plays a game between AIs a (going first) and b. Returns their tournament scores: (1, 0) if a wins, (0, 1) if
+        b wins, or (0.5, 0.5) in case of a tie.
+        """
+        print(f'{a} vs {b}:')
+        board = Board()
+        Scrabble(board, a, b, str(a), str(b))
+        scores = board.get_scores()
+        if scores[0] > scores[1]:
+            return 1, 0
+        elif scores[0] < scores[1]:
+            return 0, 1
+        return 0.5, 0.5
+
+    @staticmethod
+    def play_move(board, player, player_number):
+        """
+        Asks player for a move and plays it on board.
+        """
+        move = player.choose_move()
+        move.play(board, player_number)
+
+
+if __name__ == '__main__':
+    players = [Incrementalist(), Incrementalist()]
+    ScrabbleTournament(players).run()

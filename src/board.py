@@ -72,6 +72,7 @@ class Board:
         self._scores = [0, 0]
         self._current_player = 0
         self._number_of_passes = 0
+        self._last_move = None
 
     def _deal(self, hand, n):
         """
@@ -140,6 +141,12 @@ class Board:
 
     def get_square(self, location):
         return self._squares[location.r][location.c]
+
+    def set_last_move(self, move):
+        self._last_move = move
+
+    def get_last_move(self):
+        return self._last_move
 
     def is_occupied(self, location):
         return self.get_square(location).isalpha()

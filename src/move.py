@@ -10,6 +10,7 @@ class ExchangeTiles:
         self.tiles_to_exchange = tiles_to_exchange
 
     def play(self, board, player_number):
+        board.set_last_move(self)
         board.exchange(board.get_hand(player_number), self.tiles_to_exchange)
 
 
@@ -23,6 +24,7 @@ class PlayWord:
         self._direction = direction
 
     def play(self, board, player_number):
+        board.set_last_move(self)
         board.play(self._word, self._location, self._direction, board.get_hand(player_number))
         # These are returned for the benefit of the GUI
         return self._location, self._direction
