@@ -1,3 +1,5 @@
+from debugpy.common.timestamp import current
+
 from location import *
 from board import *
 from move import *
@@ -10,6 +12,10 @@ ALL_TILES = [True] * 7
 #carson suggests i could use trie datatype instead so i can discard invalid words before i call verify legality.
 #right now my words have to start at an empty location. i could try all locations but that would slowwww things
 #it might never be using a letter on the board.
+
+#current plan: first find a better way to discard words before i verify legality.
+#could see if the 8 letters in whatever direction don't contain words not in the considered words.
+#then bloat my considered word list by going through each word and adding a word for each letter in it where i replace that letter with a space.
 class Incrementalist:
     """
     Maybe slightly less dumb AI.
@@ -56,13 +62,16 @@ class Incrementalist:
                 else:
                     if any(letter in board_count for letter in word):
                         valid_words.append(recapitalized_word)
-        print("valid words: ", len(valid_words))
-        return valid_words
+        #print("valid words: ", len(valid_words))
+        valid_words_with_spaces=[]
+        for word in valid_words:
+            for i in range(len(word)):
+                valid_words_with_spaces.append(word[:i] + ' ' + word[i+1:])
+        print(valid_words)
+        print(valid_words_with_spaces)
+        return valid_words + valid_words_with_spaces
 
     def choose_move(self):
-        last_move = self._gatekeeper.get_last_move()
-        if last_move:
-            print(self._gatekeeper.get_last_move()._word)
         hand = self._gatekeeper.get_hand()
         board_info = self.get_board_tiles()
         words = self.load_words("words.txt")
@@ -82,12 +91,30 @@ class Incrementalist:
         words = [x for x in words if x is not None]
         #for each legitimate word:
         for word in words:
+            word_length = len(word)
             #for each unoccupied location:
             for location in empty_locations:
                 #for each direction:
                 for direction in HORIZONTAL, VERTICAL:
+
+                    if location.r + direction.r*word_length >= 15:
+                        break
+                    if location.c + direction.c*word_length >= 15:
+                        break
+                    conflicting = False
+                    current_location = location
+                    for offset in range(word_length):
+                        current_location += direction
+                        tile = self._gatekeeper.get_square(current_location)
+                        # If there's a tile that conflicts with the current word's letter, skip
+                        if tile.isalpha() and tile != word[offset]:
+                            conflicting = True
+                            break
+                    if conflicting:
+                        break
+
+                    # discard the play if the spaces up to the word length on the board contain any letters not in the play
                     try:
-                        #before i verify legality, find a way to say "in the say 8 spaces "
                         self._gatekeeper.verify_legality(word,location,direction)
                         score = self._gatekeeper.score(word,location,direction)
                         #print("valid word found: ", word, " at location ", location, " in direction ", " with score of ", score)
@@ -96,13 +123,14 @@ class Incrementalist:
                             best_word = word
                             best_location = location
                             best_direction = direction
-                    except:
+                    except Exception as e:
+                        #print("word: ", word, "location: ", location, "direction: ", direction)
+                        #print(e)
                         pass
-        #i want to try to play
         #could optimize by only checking locations where it's possible to play out that far from the boardspace.
+        print("best word is ", best_word, " at ", best_location, " direction ", best_location)
         if best_word is None:
             return ExchangeTiles(ALL_TILES)
-        print("trying to play word ", best_word, " at ", best_location, " direction ", best_location)
         return PlayWord(best_word, best_location, best_direction)
 
     #not the best name because this also returns the empty positions.
