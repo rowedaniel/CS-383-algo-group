@@ -7,6 +7,16 @@ from collections import Counter
 
 ALL_TILES = [True] * 7
 
+class Chunk:
+
+    def __init__(self, letters, row, column):
+        self.letters = letters
+        self.r = row
+        self.c = column
+
+    def __str__(self):
+        return str((self.letters, self.r, self.c))
+
 #bugs: doesn't handle the case of having two blanks in hand.
 #this is really slow because i am calling verify_legality for each word at each position at each direction.
 #carson suggests i could use trie datatype instead so i can discard invalid words before i call verify legality.
@@ -34,7 +44,7 @@ class Incrementalist:
     #i suspect considering even one wildcard slows considerably. I won't support the bot considering two wildcards
     #for the same reason, except it also just seems strategically wrong to use two wildcards in a turn.
     def get_valid_words(self, hand, words_list, board_tiles):
-        lower_only = [letter for letter in hand if not letter.isupper()]
+        lower_only = [letter for letter in hand if letter.islower()]
         hand = ''.join(hand)
         board_tiles = ''.join(board_tiles)
         hand_count = Counter(hand.lower())
@@ -144,7 +154,38 @@ class Incrementalist:
                     board_tiles.append(square)
                 else:
                     empty_positions.append(Location(row, col))
-
-
         return board_tiles, empty_positions
 
+    def get_chunks(self):
+        horizontal_chunks = []
+        vertical_chunks = []
+        chunkedH = []
+        chunkedV = []
+        for row in range(15):
+            for col in range(15):
+                square = self._gatekeeper.get_square(Location(row, col))
+                if square.isalpha() and (row, col) not in chunkedH:
+                    chunk = [square]
+                    chunkedH.append((row, col))
+                    i = 1
+                    try:
+                        while self._gatekeeper.get_square(Location(row, col+i)).isalpha():
+                            chunk.append(self._gatekeeper.get_square(Location(row, col+i)))
+                            chunkedH.append((row, col+i))
+                            i += 1
+                    except IndexError:
+                        pass
+                    horizontal_chunks.append(Chunk(''.join(chunk), row, col))
+                if square.isalpha() and (row, col) not in chunkedV:
+                    chunk = [square]
+                    chunkedV.append((row, col))
+                    i = 1
+                    try:
+                        while self._gatekeeper.get_square(Location(row+i, col)).isalpha():
+                            chunk.append(self._gatekeeper.get_square(Location(row+i, col)))
+                            chunkedV.append((row+i, col))
+                            i += 1
+                    except IndexError:
+                        pass
+                    vertical_chunks.append(Chunk(''.join(chunk), row, col))
+        return horizontal_chunks, vertical_chunks
