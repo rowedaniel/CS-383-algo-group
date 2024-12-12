@@ -1,3 +1,10 @@
+# Authors:
+# Alex David Skiles
+# Daniel Neshyba-Rowe
+# Elliot Mayer
+# Ian Cebula
+
+
 from location import *
 from board import *
 from move import *
