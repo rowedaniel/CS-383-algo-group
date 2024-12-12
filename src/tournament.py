@@ -1,4 +1,4 @@
-from incrementalist2 import Incrementalist
+from excrementalist import Incrementalist
 from board import Board
 from gatekeeper import GateKeeper
 

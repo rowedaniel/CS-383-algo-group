@@ -1,5 +1,3 @@
-from debugpy.common.timestamp import current
-
 from location import *
 from board import *
 from move import *
@@ -16,7 +14,7 @@ ALL_TILES = [True] * 7
 #current plan: first find a better way to discard words before i verify legality.
 #could see if the 8 letters in whatever direction don't contain words not in the considered words.
 #then bloat my considered word list by going through each word and adding a word for each letter in it where i replace that letter with a space.
-class Incrementalist:
+class Excrementalist:
     """
     Maybe slightly less dumb AI.
     """
@@ -35,7 +33,9 @@ class Incrementalist:
     #for the same reason, except it also just seems strategically wrong to use two wildcards in a turn.
     def get_valid_words(self, hand, words_list, board_tiles):
         lower_only = [letter for letter in hand if not letter.isupper()]
+        #print("lower only: ", lower_only)
         hand = ''.join(hand)
+        #print("hand: ", hand)
         board_tiles = ''.join(board_tiles)
         hand_count = Counter(hand.lower())
         board_count = Counter(board_tiles.lower())
@@ -51,24 +51,28 @@ class Incrementalist:
                 recapitalized_word=[]
                 for letter in word:
                     if letter.lower() not in lower_only:
-                        recapitalized_word.append(letter.upper())
+                        recapitalized_word.append(letter.lower())
+                        # this is currently making too much upper so switch to lower ^
+                        #actually maybe instead of capitalizing just replace it with space!
+                        #maybe not. this whole recapitalization thing is stupid
+
                     else:
                         recapitalized_word.append(letter)
                 recapitalized_word = ''.join(recapitalized_word)
-
+                #print(recapitalized_word)
                 #check that the word contains a letter from the board, but ignore this if its the first move
                 if self._gatekeeper.get_square(CENTER) == DOUBLE_WORD_SCORE:
-                    valid_words.append(recapitalized_word)
+                    valid_words.append(word)
                 else:
                     if any(letter in board_count for letter in word):
-                        valid_words.append(recapitalized_word)
+                        valid_words.append(word)
         #print("valid words: ", len(valid_words))
         valid_words_with_spaces=[]
         for word in valid_words:
             for i in range(len(word)):
                 valid_words_with_spaces.append(word[:i] + ' ' + word[i+1:])
-        print(valid_words)
-        print(valid_words_with_spaces)
+        #print(valid_words)
+        #print(valid_words_with_spaces)
         return valid_words + valid_words_with_spaces
 
     def choose_move(self):
@@ -80,6 +84,7 @@ class Incrementalist:
             for letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
                 replaced_hand = [letter if tile == "_" else tile for tile in hand]
                 valid_words.extend(self.get_valid_words(replaced_hand, words, board_info[0]))
+        #print("len valid words: ", len(valid_words), " valid words: ", valid_words)
         return self.find_best_move(valid_words, board_info[1])
 
     def find_best_move(self, words, empty_locations):
@@ -96,12 +101,28 @@ class Incrementalist:
             for location in empty_locations:
                 #for each direction:
                 for direction in HORIZONTAL, VERTICAL:
-
+                    #maybe here i could modify the word by replacing occupied letters with spaces
                     if location.r + direction.r*word_length >= 15:
                         break
                     if location.c + direction.c*word_length >= 15:
                         break
-                    conflicting = False
+
+                    current_location = location
+                    good = True
+                    trial_word = word
+                    for offset in range(word_length):
+                        tile = self._gatekeeper.get_square(current_location)
+                        if tile.isalpha():
+                            if tile != trial_word[offset]:
+                                good = False
+                                break
+                            trial_word=list(trial_word)
+                            trial_word[offset]=' '
+                            trial_word="".join(trial_word)
+                        current_location += direction
+                    if not good:
+                        continue
+                    '''conflicting = False
                     current_location = location
                     for offset in range(word_length):
                         current_location += direction
@@ -112,25 +133,28 @@ class Incrementalist:
                             break
                     if conflicting:
                         break
+                        '''
 
                     # discard the play if the spaces up to the word length on the board contain any letters not in the play
                     try:
-                        self._gatekeeper.verify_legality(word,location,direction)
-                        score = self._gatekeeper.score(word,location,direction)
+                        self._gatekeeper.verify_legality(trial_word,location,direction)
+                        score = self._gatekeeper.score(trial_word,location,direction)
                         #print("valid word found: ", word, " at location ", location, " in direction ", " with score of ", score)
                         if score > best_score:
                             best_score = score
-                            best_word = word
+                            best_word = trial_word
                             best_location = location
                             best_direction = direction
                     except Exception as e:
-                        #print("word: ", word, "location: ", location, "direction: ", direction)
+                        #print("word: ", trial_word, "location: ", location, "direction: ", direction)
                         #print(e)
                         pass
         #could optimize by only checking locations where it's possible to play out that far from the boardspace.
-        print("best word is ", best_word, " at ", best_location, " direction ", best_location)
+        #print("best word is ", best_word, " at ", best_location, " direction ", best_location)
         if best_word is None:
+            #print("exchanging tiles")
             return ExchangeTiles(ALL_TILES)
+        #print("best word is ", best_word, " at ", best_location, " direction ", best_location)
         return PlayWord(best_word, best_location, best_direction)
 
     #not the best name because this also returns the empty positions.
